@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xypd - P2P File Transfer</title>
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss: stun:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self';">
+    <link rel="stylesheet" href="style.css">
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+            go.run(result.instance);
+        });
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'block';
+        }
+
+        function startSending() {
+            showView('sender-view');
+            createSession();
+        }
+
+        function startReceiving() {
+            showView('receiver-view');
+        }
+    </script>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <h1>xypd</h1>
+            <p>Secure Peer-to-Peer File Transfer</p>
+        </header>
+
+        <!-- Landing View -->
+        <div id="landing-view" class="view">
+            <div class="action-buttons">
+                <button class="btn-large send" onclick="startSending()">
+                    <span class="icon">📤</span>
+                    <span>Send</span>
+                </button>
+                <button class="btn-large receive" onclick="startReceiving()">
+                    <span class="icon">📥</span>
+                    <span>Receive</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sender View -->
+        <div id="sender-view" class="view" style="display:none;">
+            <h2>Your Room ID</h2>
+            <p>Share this with the receiver:</p>
+            <div class="credentials-card">
+                <div class="credential-item">
+                    <label>Room ID</label>
+                    <div class="code-container">
+                        <div class="code" id="generated-room-id">Generating...</div>
+                        <button class="btn-icon" onclick="copyToClipboard('generated-room-id')"
+                            title="Copy Room ID">📋</button>
+                    </div>
+                </div>
+            </div>
+            <div id="sender-status" class="status-message">Waiting for peer to join...</div>
+        </div>
+
+        <script>
+            function copyToClipboard(elementId) {
+                const text = document.getElementById(elementId).innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    alert("Copied to clipboard!");
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            }
+        </script>
+
+        <!-- Receiver View -->
+        <div id="receiver-view" class="view" style="display:none;">
+            <h2>Join Room</h2>
+            <form onsubmit="event.preventDefault(); connectToRoom(document.getElementById('roomIdInput').value)">
+                <div class="input-group">
+                    <input type="text" id="roomIdInput" placeholder="Enter Room ID" autocomplete="off"
+                        style="text-transform: uppercase;">
+                </div>
+                <button type="submit" class="btn-primary">Join Room</button>
+            </form>
+            <button class="btn-secondary" onclick="showView('landing-view')">Back</button>
+        </div>
+
+        <!-- Transfer View -->
+        <div id="transfer-container" class="view" style="display:none;">
+            <h2>File Transfer</h2>
+            <div class="upload-area" id="drop-zone">
+                <div class="icon" style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
+                <p id="drop-text">Drag & Drop files here or click to select</p>
+                <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(this.files)">
+                <div id="selected-file-name" style="font-weight: bold; margin: 1rem 0; display: none;"></div>
+            </div>
+            <button class="btn-primary" onclick="sendFile()" id="send-btn" style="display:none;">Send File</button>
+            <div id="progress-container" style="display:none; margin-top: 1rem;">
+                <div class="progress-bar-bg">
+                    <div id="progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+                <div id="progress-text" style="text-align: center; margin-top: 0.5rem;">0%</div>
+            </div>
+
+            <div id="status" class="status-message">Connected! Ready to transfer.</div>
+        </div>
+
+        <script>
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('fileInput');
+            const sendBtn = document.getElementById('send-btn');
+            const fileNameDisplay = document.getElementById('selected-file-name');
+            const dropText = document.getElementById('drop-text');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect(e.dataTransfer.files);
+                }
+            });
+
+            function handleFileSelect(files) {
+                if (files.length > 0) {
+                    fileNameDisplay.innerText = "Selected: " + files[0].name;
+                    fileNameDisplay.style.display = 'block';
+                    sendBtn.style.display = 'block';
+                    dropText.style.display = 'none';
+                }
+            }
+        </script>
+
+        <!-- Hidden legacy container for compatibility if needed, but we replaced it -->
+        <div id="join-container" style="display:none;"></div>
+
+        <footer>
+            <p>&copy; <a href="https://github.com/zorig" target="_blank">Zorig</a>. Open Source P2P File Transfer.</p>
+        </footer>
+    </div>
+</body>
+
+</html>
