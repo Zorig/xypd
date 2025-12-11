@@ -12,8 +12,8 @@ import (
 // Constants - no more magic numbers
 const (
 	chunkSize        = 16 * 1024         // 16KB per chunk
-	maxBufferSize    = 16 * 1024 * 1024  // 16MB buffer limit
-	backpressureWait = 100               // milliseconds
+	maxBufferSize    = 64 * 1024         // 64KB buffer limit (reduced from 16MB to prevent queue overflow)
+	backpressureWait = 50                // milliseconds (faster retry)
 	maxFileSize      = 500 * 1024 * 1024 // 500MB max file size
 	roomIDLength     = 6
 )
@@ -611,7 +611,15 @@ func sendFile(this js.Value, args []js.Value) interface{} {
 
 	var readNextChunk js.Func
 	readNextChunk = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		// Check if data channel is still open
+		if dc.IsUndefined() || dc.Get("readyState").String() != "open" {
+			updateStatus("Transfer interrupted - peer disconnected")
+			readNextChunk.Release()
+			return nil
+		}
+
 		// Check bufferedAmount to avoid overwhelming the channel
+		// Safari has a lower limit, so we keep this tight
 		if dc.Get("bufferedAmount").Int() > maxBufferSize {
 			window.Call("setTimeout", readNextChunk, backpressureWait)
 			return nil
@@ -633,6 +641,21 @@ func sendFile(this js.Value, args []js.Value) interface{} {
 
 		var onLoadHandler js.Func
 		onLoadHandler = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			// Double-check channel state and buffer before actual send
+			if dc.IsUndefined() || dc.Get("readyState").String() != "open" {
+				onLoadHandler.Release()
+				return nil
+			}
+
+			// Final safety check for buffer
+			if dc.Get("bufferedAmount").Int() > maxBufferSize {
+				// Buffer full? Back off and retry this chunk loop
+				// We don't increment offset, just retry
+				onLoadHandler.Release()
+				window.Call("setTimeout", readNextChunk, backpressureWait)
+				return nil
+			}
+
 			res := reader.Get("result")
 			dc.Call("send", res)
 
