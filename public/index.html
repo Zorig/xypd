@@ -4,12 +4,46 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>xypd - P2P File Transfer</title>
+    <title>xypd - Secure P2P File Transfer</title>
+
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="xypd - Secure P2P File Transfer">
     <meta name="description"
-        content="Secure peer-to-peer file transfer using WebRTC. No server storage, end-to-end encrypted.">
+        content="Secure peer-to-peer file transfer directly in your browser. No server storage, end-to-end encrypted. Transfer files up to 500MB.">
+    <meta name="keywords"
+        content="p2p file transfer, webrtc, secure file sharing, encrypted file share, 500mb file limit">
+    <meta name="author" content="Zorig">
+    <meta name="theme-color" content="#2563eb">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://xypd.zorig.dev/">
+    <meta property="og:title" content="xypd - Secure P2P File Transfer">
+    <meta property="og:description"
+        content="Secure peer-to-peer file transfer directly in your browser. No server storage, end-to-end encrypted. Max 500MB.">
+    <meta property="og:image" content="https://xypd.zorig.dev/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://xypd.zorig.dev/">
+    <meta property="twitter:title" content="xypd - Secure P2P File Transfer">
+    <meta property="twitter:creator" content="@rizogg">
+    <meta property="twitter:description"
+        content="Secure peer-to-peer file transfer directly in your browser. No server storage, end-to-end encrypted. Max 500MB.">
+    <meta property="twitter:image" content="https://xypd.zorig.dev/og-image.png">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://xypd.zorig.dev/">
+
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss: stun: https://www.google-analytics.com https://analytics.google.com; img-src 'self' data: blob: https://www.google-analytics.com; object-src 'none'; base-uri 'self';">
     <link rel="stylesheet" href="style.css">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BVCP2JGCJY"></script>
     <script>
@@ -85,6 +119,8 @@
             <div class="upload-area" id="drop-zone">
                 <div class="icon" style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
                 <p id="drop-text">Drag & Drop files here or click to select</p>
+                <p class="limit-text" style="font-size: 0.8rem; opacity: 0.7; margin-top: 0.5rem;">Maximum file size:
+                    500MB</p>
                 <input type="file" id="fileInput" style="display:none">
                 <div id="selected-file-name" style="font-weight: bold; margin: 1rem 0; display: none;"></div>
             </div>
